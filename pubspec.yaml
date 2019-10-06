@@ -2,6 +2,7 @@ name: nearby_connections
 description: A Flutter plugin for the Nearby Connections API.
 version: 0.0.1
 author: Roman Kaufmann <office@greenhopper.at>
+homepage: https://github.com/Protoss78/nearby_connections
 repository: https://github.com/Protoss78/nearby_connections
 
 environment:
