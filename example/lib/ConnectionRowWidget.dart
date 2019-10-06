@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:nearby_connections/model.dart';
 import 'package:nearby_connections/nearby_connections.dart';
 
 import 'main.dart';

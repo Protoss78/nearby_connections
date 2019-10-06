@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
-import 'package:nearby_connections/model.dart';
 import 'package:nearby_connections/nearby_connections.dart';
 import 'package:nearby_connections_example/ConnectionRowWidget.dart';
 
@@ -56,7 +55,8 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       connectionMode = ConnectionMode.ADVERTISING;
     });
-    NearbyConnections.startAdvertising(strategy: Strategy.P2P_CLUSTER, name: nameController.text, idService: SERVICE_ID);
+    NearbyConnections.startAdvertising(
+        strategy: Strategy.P2P_CLUSTER, name: nameController.text, idService: SERVICE_ID);
   }
 
   void stopAdvertise() {
@@ -226,7 +226,9 @@ class _MyAppState extends State<MyApp> {
     if (connections == null || connections.isEmpty) {
       return List<Widget>();
     }
-    return connections.values.map((connection) => ConnectionRowWidget(connection, nameController.text, _manuallyDisconnectConnection)).toList();
+    return connections.values
+        .map((connection) => ConnectionRowWidget(connection, nameController.text, _manuallyDisconnectConnection))
+        .toList();
   }
 
   void _manuallyDisconnectConnection(Connection connection) {
@@ -254,5 +256,4 @@ class _MyAppState extends State<MyApp> {
       ),
     );
   }
-
 }
