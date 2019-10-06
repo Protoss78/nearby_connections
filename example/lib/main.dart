@@ -1,11 +1,11 @@
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 import 'package:nearby_connections/model.dart';
 import 'package:nearby_connections/nearby_connections.dart';
+import 'package:nearby_connections_example/ConnectionRowWidget.dart';
 
 const String SERVICE_ID = 'SERVICE_ID_1';
 
@@ -30,7 +30,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ConnectionMode connectionMode = ConnectionMode.NONE;
-  final myController = TextEditingController(text: faker.person.name());
+  final nameController = TextEditingController(text: faker.person.name());
   HashMap<String, Connection> connections = HashMap();
   BuildContext dialogContext;
   bool autoAccept = true;
@@ -48,7 +48,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    myController.dispose();
+    nameController.dispose();
     super.dispose();
   }
 
@@ -56,7 +56,7 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       connectionMode = ConnectionMode.ADVERTISING;
     });
-    NearbyConnections.startAdvertising(strategy: Strategy.P2P_CLUSTER, name: myController.text, idService: SERVICE_ID);
+    NearbyConnections.startAdvertising(strategy: Strategy.P2P_CLUSTER, name: nameController.text, idService: SERVICE_ID);
   }
 
   void stopAdvertise() {
@@ -171,7 +171,7 @@ class _MyAppState extends State<MyApp> {
       Padding(
         padding: EdgeInsets.all(8.0),
         child: TextField(
-          controller: myController,
+          controller: nameController,
           decoration: InputDecoration(labelText: 'Name'),
           readOnly: connectionMode != ConnectionMode.NONE,
         ),
@@ -226,72 +226,10 @@ class _MyAppState extends State<MyApp> {
     if (connections == null || connections.isEmpty) {
       return List<Widget>();
     }
-    List<Connection> connectionList = List.from(connections.values);
-    List<Widget> widgets = List();
-    connectionList.forEach((connection) {
-      widgets.add(Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: _buildConnectionRow(connection),
-      ));
-      widgets.add(LinearProgressIndicator(value: connection.value));
-    });
-    return widgets;
-  }
-
-  List<Widget> _buildConnectionRow(Connection connection) {
-    List<Widget> widgets = [
-      _buildStatusIcon(connection),
-      _buildNameText(connection),
-    ];
-    widgets.addAll(_buildDisConnectButton(connection));
-    return widgets;
-  }
-
-  Text _buildNameText(Connection connection) {
-    if (connection.discovery != null && connection.discovery.nameEndpoint != null) {
-      return Text(connection.discovery.nameEndpoint);
-    } else if (connection.lifecycle != null && connection.lifecycle.endpointName != null) {
-      return Text(connection.lifecycle.endpointName);
-    }
-  }
-
-  List<Widget> _buildDisConnectButton(Connection connection) {
-    List<Widget> widgets = List();
-    if (connection.lifecycle == null ||
-        connection.lifecycle.type == TypeLifecycle.disconnected ||
-        connection.lifecycle.type == TypeLifecycle.rejected) {
-      widgets.add(RaisedButton(
-          onPressed: () {
-            if (connection.discovery != null) {
-              NearbyConnections.requestConnection(myController.text, connection.discovery.idEndpoint);
-            } else {
-              NearbyConnections.requestConnection(myController.text, connection.lifecycle.idEndpoint);
-            }
-          },
-          child: Text('Connect')));
-    } else if (connection.lifecycle.type == TypeLifecycle.connected) {
-      widgets.add(RaisedButton(
-          onPressed: () {
-            _manuallyDisconnectConnection(connection);
-          },
-          child: Text('Disonnect')));
-    } else if (connection.lifecycle.type == TypeLifecycle.initiated) {
-      widgets.add(RaisedButton(
-          onPressed: () {
-            NearbyConnections.acceptConnection(connection.lifecycle.idEndpoint);
-          },
-          child: Text('Accept')));
-      widgets.add(RaisedButton(
-          onPressed: () {
-            NearbyConnections.rejectConnection(connection.lifecycle.idEndpoint);
-          },
-          child: Text('Reject')));
-    }
-    return widgets;
+    return connections.values.map((connection) => ConnectionRowWidget(connection, nameController.text, _manuallyDisconnectConnection)).toList();
   }
 
   void _manuallyDisconnectConnection(Connection connection) {
-    NearbyConnections.disconnectFromEndpoint(connection.lifecycle.idEndpoint);
     // Our state must be updated manually, as in my tests I did not receive a disconnect event from the plugin
     // after calling above method
     setState(() {
@@ -317,23 +255,4 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  _buildStatusIcon(Connection event) {
-    if (event.lifecycle == null) {
-      return Icon(Icons.signal_cellular_off);
-    }
-    switch (event.lifecycle.type) {
-      case TypeLifecycle.initiated:
-        return Icon(Icons.signal_cellular_null);
-        break;
-      case TypeLifecycle.connected:
-        return Icon(Icons.signal_cellular_4_bar);
-        break;
-      case TypeLifecycle.disconnected:
-        return Icon(Icons.signal_cellular_off);
-        break;
-      case TypeLifecycle.rejected:
-        return Icon(Icons.signal_cellular_connected_no_internet_4_bar);
-        break;
-    }
-  }
 }
